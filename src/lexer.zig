@@ -9,36 +9,32 @@ pub const Token = union(enum) {
     Indent: []u8,
 };
 
-pub fn lex(source_text: []const u8) LexError!std.ArrayList(Token) {
-    const heap = std.heap.page_allocator;
-
+pub fn lex(source_text: []const u8, gpa: std.mem.Allocator) LexError!std.ArrayList(Token) {
     var tokens: std.ArrayList(Token) = .empty;
     var last_word: std.ArrayList(u8) = .empty;
-    defer last_word.deinit(heap);
+    defer last_word.deinit(gpa);
 
     for (source_text) |source_text_char| {
         switch (source_text_char) {
             ' ' => {
-                const token = try createToken(last_word);
-                try tokens.append(heap, token);
+                const token = try createToken(last_word, gpa);
+                try tokens.append(gpa, token);
             },
-            else => try last_word.append(heap, source_text_char),
+            else => try last_word.append(gpa, source_text_char),
         }
     }
 
-    const token = try createToken(last_word);
-    try tokens.append(heap, token);
+    const token = try createToken(last_word, gpa);
+    try tokens.append(gpa, token);
 
     return tokens;
 }
 
-fn createToken(text: std.ArrayList(u8)) !Token {
-    const heap = std.heap.page_allocator;
-
+fn createToken(text: std.ArrayList(u8), gpa: std.mem.Allocator) !Token {
     if (std.mem.eql(u8, text.items, "print")) {
         return Token.Print;
     } else {
-        const new_items = try text.clone(heap);
+        const new_items = try text.clone(gpa);
 
         return Token{ .Indent = new_items.items };
     }
