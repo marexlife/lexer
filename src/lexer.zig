@@ -18,14 +18,8 @@ pub fn lex(source_text: []const u8) LexError!std.ArrayList(Token) {
 
     for (source_text) |source_text_char| {
         switch (source_text_char) {
-            ' ' => {
-                const token = createToken(last_word);
-
-                tokens.append(heap, token);
-            },
-            else => {
-                last_word.append(heap, source_text_char);
-            },
+            ' ' => tokens.append(heap, createToken(last_word)),
+            else => last_word.append(heap, source_text_char),
         }
     }
 
