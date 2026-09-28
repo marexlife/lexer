@@ -7,7 +7,7 @@ pub fn main() !void {
     const source_text = "print test";
     const tokens = try lex(source_text);
 
-    for (tokens) |token| {
+    for (tokens.items) |token| {
         std.debug.print("{}", .{token});
     }
 }
