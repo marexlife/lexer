@@ -1,15 +1,11 @@
 const std = @import("std");
 
-pub const LexError = error{
-    OutOfMemory,
-};
-
 pub const Token = union(enum) {
     Print,
     Indent: []u8,
 };
 
-pub fn lex(source_text: []const u8, gpa: std.mem.Allocator) LexError!std.ArrayList(Token) {
+pub fn lex(source_text: []const u8, gpa: std.mem.Allocator) !std.ArrayList(Token) {
     var tokens: std.ArrayList(Token) = .empty;
     var last_word: std.ArrayList(u8) = .empty;
     defer last_word.deinit(gpa);
