@@ -4,12 +4,10 @@ const Token = lexer.Token;
 const lex = lexer.lex;
 
 pub fn main() !void {
-    const source_text = "";
-    const tokens_len = 100;
-
-    const tokens = try lex(source_text, tokens_len);
+    const source_text = "print test";
+    const tokens = try lex(source_text);
 
     for (tokens) |token| {
-        std.debug.print("{}", token);
+        std.debug.print("{}", .{token});
     }
 }

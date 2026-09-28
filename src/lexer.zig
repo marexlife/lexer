@@ -9,38 +9,22 @@ pub const Token = union(enum) {
     Indent: []u8,
 };
 
-pub fn lex(source_text: []u8, init_token_len: usize) LexError![]Token {
+pub fn lex(source_text: []const u8) LexError!std.ArrayList(Token) {
     const heap = std.heap.page_allocator;
-    const last_word_expected_size: usize = 100;
+    var tokens = std.ArrayList(Token){};
 
-    var chars_pushed: usize = 0;
+    var last_word = std.ArrayList(u8){};
+    defer last_word.deinit(heap);
 
-    var tokens: []Token = try heap.alloc(Token, init_token_len);
-    var tokens_pushed: usize = 0;
-
-    const last_word: []u8 = try heap.alloc(u8, last_word_expected_size);
-    defer heap.free(last_word);
-
-    for (source_text) |element| {
-        switch (element) {
+    for (source_text) |source_text_char| {
+        switch (source_text_char) {
             ' ' => {
-                tokens_pushed += 1;
+                const token = createToken(last_word);
 
-                if (tokens_pushed > tokens.len) {
-                    tokens.len *= 2;
-                    tokens.ptr = try heap.realloc(u8, tokens.len);
-                    (*tokens) = createToken(last_word);
-                }
+                tokens.append(heap, token);
             },
             else => {
-                chars_pushed += 1;
-
-                if (chars_pushed > last_word.len) {
-                    last_word.len *= 2;
-
-                    last_word.ptr = try heap.realloc(last_word, last_word.len);
-                    (*last_word) = *source_text;
-                }
+                last_word.append(heap, source_text_char);
             },
         }
     }
@@ -48,10 +32,10 @@ pub fn lex(source_text: []u8, init_token_len: usize) LexError![]Token {
     return tokens;
 }
 
-fn createToken(text: []u8) Token {
+fn createToken(text: std.ArrayList(u8)) Token {
     if (std.mem.eql(u8, text, "print")) {
         return Token.Print;
     } else {
-        return Token.Ident(text);
+        return Token{ .Indent = text };
     }
 }
