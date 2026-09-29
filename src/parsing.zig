@@ -2,7 +2,7 @@ const std = @import("std");
 const Token = @import("lexing.zig").Token;
 
 pub const ParserError = error{
-    OutOfRange,
+    OutOfBounds,
 };
 
 pub const TokenStream = struct {
@@ -11,28 +11,38 @@ pub const TokenStream = struct {
     tokens: std.ArrayList(Token),
     progress: i32,
 
-    pub fn from(tokens: std.ArrayList(Token)) Self {
+    pub inline fn from(tokens: std.ArrayList(Token)) Self {
         return Self{
             .tokens = tokens,
             .progress = 0,
         };
     }
 
-    pub fn current(self: *Self) ParserError!*Token {
-        return if (self.progress > 0) {
-            self.tokens[self.progress];
-        } else {
-            ParserError.OutOfRange;
-        };
+    pub inline fn current(self: *Self) *Token {
+        return self.tokens[self.progress];
     }
 
-    pub fn increase(self: *Self) !void {
+    pub fn try_increase(self: *Self) ParserError!void {
+        if (!isAtEnd(self)) {
+            self.increase();
+        } else {
+            return ParserError.OutOfBounds;
+        }
+    }
+
+    pub inline fn increase(self: *Self) void {
         self.progress += 1;
+    }
+
+    pub inline fn isAtEnd(self: *Self) bool {
+        return self.progress >= self.tokens.items.len;
     }
 };
 
-pub fn parse(tokens: std.ArrayList(Token)) !void {
+pub fn parse(tokens: std.ArrayList(Token)) ParserError!void {
     var token_stream = TokenStream.from(tokens);
 
-    try token_stream.increase();
+    while (!token_stream.isAtEnd()) {
+        token_stream.increase();
+    }
 }
