@@ -7,7 +7,7 @@ pub fn main() !void {
     const allocator = std.heap.page_allocator;
     const source_text = "print test";
 
-    const tokens = try lex(source_text, allocator);
+    const tokens = try lex(allocator, source_text);
 
     for (tokens.items) |token| {
         std.debug.print("{}", .{token});
