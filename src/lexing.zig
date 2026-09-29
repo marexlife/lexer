@@ -1,9 +1,15 @@
 const std = @import("std");
 
-pub const Token = union(enum) {
+pub const TokenKind = enum {
     Print,
     Comma,
-    Indent: []u8,
+    Ident,
+};
+
+pub const Token = union(TokenKind) {
+    Print,
+    Comma,
+    Ident: []u8,
 };
 
 pub fn lex(gpa: std.mem.Allocator, source_text: []const u8) !std.ArrayList(Token) {
@@ -73,6 +79,6 @@ inline fn createTokenFromWord(gpa: std.mem.Allocator, last_word: std.ArrayList(u
     } else {
         const new_items = try last_word.clone(gpa);
 
-        return Token{ .Indent = new_items.items };
+        return Token{ .Ident = new_items.items };
     }
 }
