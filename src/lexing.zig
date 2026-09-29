@@ -1,12 +1,12 @@
 const std = @import("std");
 
-pub const TokenKind = enum {
+pub const TokenTag = enum {
     Print,
     Comma,
     Ident,
 };
 
-pub const TokenContent = union(TokenKind) {
+pub const TokenKind = union(TokenTag) {
     Print,
     Comma,
     Ident: []u8,
@@ -20,23 +20,23 @@ pub const SourcePos = struct {
 pub const Token = struct {
     const Self = Token;
 
-    content: TokenContent,
+    kind: TokenKind,
     source_pos: SourcePos,
 
-    pub inline fn from(content: TokenContent, source_pos: SourcePos) Self {
+    pub inline fn from(content: TokenKind, source_pos: SourcePos) Self {
         return Self{
             content,
             source_pos,
         };
     }
 
-    pub inline fn getContent(self: *Self) TokenContent {
-        return self.content;
+    pub inline fn getContent(self: *Self) TokenKind {
+        return self.kind;
     }
 };
 
-pub fn lex(gpa: std.mem.Allocator, source_text: []const u8) !std.ArrayList(TokenContent) {
-    var tokens: std.ArrayList(TokenContent) = .empty;
+pub fn lex(gpa: std.mem.Allocator, source_text: []const u8) !std.ArrayList(TokenKind) {
+    var tokens: std.ArrayList(TokenKind) = .empty;
     var last_word: std.ArrayList(u8) = .empty;
     var last_was_flushable = false;
 
@@ -69,13 +69,13 @@ pub fn lex(gpa: std.mem.Allocator, source_text: []const u8) !std.ArrayList(Token
     return tokens;
 }
 
-fn pushLastWordAndToken(gpa: std.mem.Allocator, tokens: *std.ArrayList(TokenContent), last_word: std.ArrayList(u8), token: TokenContent, last_was_flushable: bool) !void {
+fn pushLastWordAndToken(gpa: std.mem.Allocator, tokens: *std.ArrayList(TokenKind), last_word: std.ArrayList(u8), token: TokenKind, last_was_flushable: bool) !void {
     try pushLastWord(gpa, tokens, last_word, last_was_flushable);
 
     try pushToken(gpa, tokens, token);
 }
 
-fn pushLastWord(gpa: std.mem.Allocator, tokens: *std.ArrayList(TokenContent), last_word: std.ArrayList(u8), last_was_flushable: bool) !void {
+fn pushLastWord(gpa: std.mem.Allocator, tokens: *std.ArrayList(TokenKind), last_word: std.ArrayList(u8), last_was_flushable: bool) !void {
     if (!last_was_flushable) {
         return;
     }
@@ -85,23 +85,23 @@ fn pushLastWord(gpa: std.mem.Allocator, tokens: *std.ArrayList(TokenContent), la
     try pushToken(gpa, tokens, token);
 }
 
-inline fn pushToken(gpa: std.mem.Allocator, tokens: *std.ArrayList(TokenContent), token: TokenContent) !void {
+inline fn pushToken(gpa: std.mem.Allocator, tokens: *std.ArrayList(TokenKind), token: TokenKind) !void {
     try tokens.append(gpa, token);
 }
 
-inline fn createTokenFromChar(char: u8) ?TokenContent {
+inline fn createTokenFromChar(char: u8) ?TokenKind {
     return switch (char) {
-        ',' => TokenContent.Comma,
+        ',' => TokenKind.Comma,
         else => null,
     };
 }
 
-inline fn createTokenFromWord(gpa: std.mem.Allocator, last_word: std.ArrayList(u8)) !TokenContent {
+inline fn createTokenFromWord(gpa: std.mem.Allocator, last_word: std.ArrayList(u8)) !TokenKind {
     if (std.mem.eql(u8, last_word.items, "print")) {
-        return TokenContent.Print;
+        return TokenKind.Print;
     } else {
         const new_items = try last_word.clone(gpa);
 
-        return TokenContent{ .Ident = new_items.items };
+        return TokenKind{ .Ident = new_items.items };
     }
 }
