@@ -1,7 +1,7 @@
 const std = @import("std");
 const Token = @import("lexing.zig").Token;
 
-pub const ParserError = error{
+pub const ParseError = error{
     OutOfBounds,
 };
 
@@ -22,11 +22,11 @@ pub const TokenStream = struct {
         return self.tokens[self.progress];
     }
 
-    pub fn try_increase(self: *Self) ParserError!void {
+    pub fn try_increase(self: *Self) ParseError!void {
         if (!isAtEnd(self)) {
             self.increase();
         } else {
-            return ParserError.OutOfBounds;
+            return ParseError.OutOfBounds;
         }
     }
 
@@ -39,7 +39,7 @@ pub const TokenStream = struct {
     }
 };
 
-pub fn parse(tokens: std.ArrayList(Token)) ParserError!void {
+pub fn parse(tokens: std.ArrayList(Token)) ParseError!void {
     var token_stream = TokenStream.from(tokens);
 
     while (!token_stream.isAtEnd()) {
