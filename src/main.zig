@@ -5,7 +5,7 @@ const lex = lexer.lex;
 
 pub fn main() !void {
     const allocator = std.heap.page_allocator;
-    const source_text = "print test";
+    const source_text = "print test, 2";
 
     const tokens = try lex(allocator, source_text);
 

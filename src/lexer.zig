@@ -9,34 +9,48 @@ pub const Token = union(enum) {
 pub fn lex(gpa: std.mem.Allocator, source_text: []const u8) !std.ArrayList(Token) {
     var tokens: std.ArrayList(Token) = .empty;
     var last_word: std.ArrayList(u8) = .empty;
+    var last_was_flushable = false;
+
     defer last_word.deinit(gpa);
 
     for (source_text) |source_text_char| {
+        var this_is_flushable = false;
+        defer last_was_flushable = this_is_flushable;
+
         const maybe_token = createTokenFromChar(source_text_char);
 
         if (maybe_token) |token| {
-            try pushLastWordAndToken(gpa, &tokens, last_word, token);
+            try pushLastWordAndToken(gpa, &tokens, last_word, token, last_was_flushable);
 
             continue;
         }
 
         switch (source_text_char) {
-            ' ' => try pushLastWord(gpa, &tokens, last_word),
-            else => try last_word.append(gpa, source_text_char),
+            ' ' => try pushLastWord(gpa, &tokens, last_word, last_was_flushable),
+            else => {
+                this_is_flushable = true;
+
+                try last_word.append(gpa, source_text_char);
+            },
         }
     }
 
-    try pushLastWord(gpa, &tokens, last_word);
+    try pushLastWord(gpa, &tokens, last_word, last_was_flushable);
 
     return tokens;
 }
 
-fn pushLastWordAndToken(gpa: std.mem.Allocator, tokens: *std.ArrayList(Token), last_word: std.ArrayList(u8), token: Token) !void {
-    try pushLastWord(gpa, tokens, last_word);
+fn pushLastWordAndToken(gpa: std.mem.Allocator, tokens: *std.ArrayList(Token), last_word: std.ArrayList(u8), token: Token, last_was_flushable: bool) !void {
+    try pushLastWord(gpa, tokens, last_word, last_was_flushable);
+
     try pushToken(gpa, tokens, token);
 }
 
-fn pushLastWord(gpa: std.mem.Allocator, tokens: *std.ArrayList(Token), last_word: std.ArrayList(u8)) !void {
+fn pushLastWord(gpa: std.mem.Allocator, tokens: *std.ArrayList(Token), last_word: std.ArrayList(u8), last_was_flushable: bool) !void {
+    if (!last_was_flushable) {
+        return;
+    }
+
     const token = try createTokenFromWord(gpa, last_word);
 
     try pushToken(gpa, tokens, token);
