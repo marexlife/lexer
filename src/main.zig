@@ -1,16 +1,16 @@
 const std = @import("std");
-const lexer = @import("lexer.zig");
-const parser = @import("parser.zig");
-const Token = lexer.Token;
-const lex = lexer.lex;
+const lexing = @import("lexing.zig");
+const parsing = @import("parsing.zig");
+
+const Token = lexing.Token;
+const lex = lexing.lex;
+const parse = parsing.parse;
 
 pub fn main() !void {
     const allocator = std.heap.page_allocator;
     const source_text = "print test, 2";
 
-    const tokens = try lex(allocator, source_text);
+    const tokens = try lexing.lex(allocator, source_text);
 
-    for (tokens.items) |token| {
-        std.debug.print("{}", .{token});
-    }
+    try parse(tokens);
 }
