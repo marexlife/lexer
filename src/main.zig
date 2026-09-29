@@ -1,5 +1,6 @@
 const std = @import("std");
 const lexer = @import("lexer.zig");
+const parser = @import("parser.zig");
 const Token = lexer.Token;
 const lex = lexer.lex;
 
