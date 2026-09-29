@@ -6,14 +6,37 @@ pub const TokenKind = enum {
     Ident,
 };
 
-pub const Token = union(TokenKind) {
+pub const TokenContent = union(TokenKind) {
     Print,
     Comma,
     Ident: []u8,
 };
 
-pub fn lex(gpa: std.mem.Allocator, source_text: []const u8) !std.ArrayList(Token) {
-    var tokens: std.ArrayList(Token) = .empty;
+pub const SourcePos = struct {
+    line: usize,
+    column: usize,
+};
+
+pub const Token = struct {
+    const Self = Token;
+
+    content: TokenContent,
+    source_pos: SourcePos,
+
+    pub inline fn from(content: TokenContent, source_pos: SourcePos) Self {
+        return Self{
+            content,
+            source_pos,
+        };
+    }
+
+    pub inline fn getContent(self: *Self) TokenContent {
+        return self.content;
+    }
+};
+
+pub fn lex(gpa: std.mem.Allocator, source_text: []const u8) !std.ArrayList(TokenContent) {
+    var tokens: std.ArrayList(TokenContent) = .empty;
     var last_word: std.ArrayList(u8) = .empty;
     var last_was_flushable = false;
 
@@ -46,13 +69,13 @@ pub fn lex(gpa: std.mem.Allocator, source_text: []const u8) !std.ArrayList(Token
     return tokens;
 }
 
-fn pushLastWordAndToken(gpa: std.mem.Allocator, tokens: *std.ArrayList(Token), last_word: std.ArrayList(u8), token: Token, last_was_flushable: bool) !void {
+fn pushLastWordAndToken(gpa: std.mem.Allocator, tokens: *std.ArrayList(TokenContent), last_word: std.ArrayList(u8), token: TokenContent, last_was_flushable: bool) !void {
     try pushLastWord(gpa, tokens, last_word, last_was_flushable);
 
     try pushToken(gpa, tokens, token);
 }
 
-fn pushLastWord(gpa: std.mem.Allocator, tokens: *std.ArrayList(Token), last_word: std.ArrayList(u8), last_was_flushable: bool) !void {
+fn pushLastWord(gpa: std.mem.Allocator, tokens: *std.ArrayList(TokenContent), last_word: std.ArrayList(u8), last_was_flushable: bool) !void {
     if (!last_was_flushable) {
         return;
     }
@@ -62,23 +85,23 @@ fn pushLastWord(gpa: std.mem.Allocator, tokens: *std.ArrayList(Token), last_word
     try pushToken(gpa, tokens, token);
 }
 
-inline fn pushToken(gpa: std.mem.Allocator, tokens: *std.ArrayList(Token), token: Token) !void {
+inline fn pushToken(gpa: std.mem.Allocator, tokens: *std.ArrayList(TokenContent), token: TokenContent) !void {
     try tokens.append(gpa, token);
 }
 
-inline fn createTokenFromChar(char: u8) ?Token {
+inline fn createTokenFromChar(char: u8) ?TokenContent {
     return switch (char) {
-        ',' => Token.Comma,
+        ',' => TokenContent.Comma,
         else => null,
     };
 }
 
-inline fn createTokenFromWord(gpa: std.mem.Allocator, last_word: std.ArrayList(u8)) !Token {
+inline fn createTokenFromWord(gpa: std.mem.Allocator, last_word: std.ArrayList(u8)) !TokenContent {
     if (std.mem.eql(u8, last_word.items, "print")) {
-        return Token.Print;
+        return TokenContent.Print;
     } else {
         const new_items = try last_word.clone(gpa);
 
-        return Token{ .Ident = new_items.items };
+        return TokenContent{ .Ident = new_items.items };
     }
 }
