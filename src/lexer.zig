@@ -15,8 +15,9 @@ pub fn lex(gpa: std.mem.Allocator, source_text: []const u8) !std.ArrayList(Token
         const maybe_token = createTokenFromChar(source_text_char);
 
         if (maybe_token) |token| {
-            try pushLastWord(gpa, &tokens, last_word);
-            try pushToken(gpa, &tokens, token);
+            try pushLastWordAndToken(gpa, &tokens, last_word, token);
+
+            continue;
         }
 
         switch (source_text_char) {
@@ -28,6 +29,11 @@ pub fn lex(gpa: std.mem.Allocator, source_text: []const u8) !std.ArrayList(Token
     try pushLastWord(gpa, &tokens, last_word);
 
     return tokens;
+}
+
+fn pushLastWordAndToken(gpa: std.mem.Allocator, tokens: *std.ArrayList(Token), last_word: std.ArrayList(u8), token: Token) !void {
+    try pushLastWord(gpa, tokens, last_word);
+    try pushToken(gpa, tokens, token);
 }
 
 fn pushLastWord(gpa: std.mem.Allocator, tokens: *std.ArrayList(Token), last_word: std.ArrayList(u8)) !void {
